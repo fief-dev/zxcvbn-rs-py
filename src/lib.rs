@@ -4,6 +4,7 @@ use pyo3::prelude::*;
 use std::fmt;
 
 #[pyclass]
+#[pyo3(module = "zxcvbn")]
 #[derive(Clone)]
 enum Warning {
     StraightRowsOfKeysAreEasyToGuess,
@@ -105,6 +106,7 @@ fn match_warning(warning: zxcvbn::feedback::Warning) -> Warning {
 }
 
 #[pyclass]
+#[pyo3(module = "zxcvbn")]
 #[derive(Clone)]
 enum Suggestion {
     UseAFewWordsAvoidCommonPhrases,
@@ -212,6 +214,7 @@ fn match_suggestion(suggestion: zxcvbn::feedback::Suggestion) -> Suggestion {
 }
 
 #[pyclass]
+#[pyo3(module = "zxcvbn")]
 #[derive(Clone)]
 struct Feedback {
     #[pyo3(get)]
@@ -221,6 +224,7 @@ struct Feedback {
 }
 
 #[pyclass]
+#[pyo3(module = "zxcvbn")]
 struct Entropy {
     /// Estimated guesses needed to crack the password
     #[pyo3(get)]
@@ -283,6 +287,7 @@ fn zxcvbn_py(password: &str) -> PyResult<Entropy> {
 #[pyo3(name = "zxcvbn")]
 fn zxcvbn_rs_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Entropy>()?;
+    m.add_class::<Warning>()?;
     m.add_class::<Suggestion>()?;
     m.add_class::<Feedback>()?;
     m.add_function(wrap_pyfunction!(zxcvbn_py, m)?)?;

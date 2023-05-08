@@ -14,3 +14,26 @@ classifiers = [
 
 [tool.maturin]
 features = ["pyo3/extension-module"]
+
+[tool.ruff]
+extend-select = ["I", "TRY"]
+
+[tool.hatch]
+
+[tool.hatch.envs.default]
+python = "3.10"
+dependencies = [
+    "black",
+    "mypy",
+    "ruff",
+]
+
+[tool.hatch.envs.default.scripts]
+lint = [
+  "black .",
+  "ruff --fix .",
+]
+lint-check = [
+  "black --check .",
+  "ruff .",
+]
