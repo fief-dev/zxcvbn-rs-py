@@ -37,3 +37,5 @@ lint-check = [
   "black --check .",
   "ruff .",
 ]
+docs-serve = "mkdocs serve"
+docs-build = "mkdocs build"
