@@ -1,5 +1,6 @@
 extern crate zxcvbn;
 
+use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 use std::fmt;
 
@@ -257,29 +258,39 @@ struct Entropy {
 #[pyfunction]
 #[pyo3(name = "zxcvbn")]
 fn zxcvbn_py(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<Entropy> {
-    let estimate = zxcvbn::zxcvbn(password, user_inputs.unwrap_or(vec![]).as_slice()).unwrap();
-    let feedback: Option<Feedback> = match estimate.feedback() {
-        None => None,
-        Some(f) => Some(Feedback {
-            warning: match f.warning() {
+    let estimate = zxcvbn::zxcvbn(password, user_inputs.unwrap_or(vec![]).as_slice());
+    return match estimate {
+        Err(_err @ zxcvbn::ZxcvbnError::BlankPassword) => {
+            Err(PyValueError::new_err("Cannot evaluate a blank password"))
+        }
+        Err(_err @ zxcvbn::ZxcvbnError::DurationOutOfRange) => Err(PyRuntimeError::new_err(
+            "Calculation time created a duration out of range",
+        )),
+        Ok(estimate) => {
+            let feedback: Option<Feedback> = match estimate.feedback() {
                 None => None,
-                Some(w) => Some(match_warning(w)),
-            },
-            suggestions: f
-                .suggestions()
-                .iter()
-                .map(|s| match_suggestion(*s))
-                .collect::<Vec<Suggestion>>()
-                .to_vec(),
-        }),
+                Some(f) => Some(Feedback {
+                    warning: match f.warning() {
+                        None => None,
+                        Some(w) => Some(match_warning(w)),
+                    },
+                    suggestions: f
+                        .suggestions()
+                        .iter()
+                        .map(|s| match_suggestion(*s))
+                        .collect::<Vec<Suggestion>>()
+                        .to_vec(),
+                }),
+            };
+            return Ok(Entropy {
+                guesses: estimate.guesses(),
+                guesses_log10: estimate.guesses_log10(),
+                score: estimate.score(),
+                feedback: feedback,
+                calc_time: estimate.calculation_time().as_millis(),
+            });
+        }
     };
-    return Ok(Entropy {
-        guesses: estimate.guesses(),
-        guesses_log10: estimate.guesses_log10(),
-        score: estimate.score(),
-        feedback: feedback,
-        calc_time: estimate.calculation_time().as_millis(),
-    });
 }
 
 /// A Python module implemented in Rust.
