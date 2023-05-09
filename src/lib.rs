@@ -254,7 +254,6 @@ struct Entropy {
     calc_time: u128,
 }
 
-/// Formats the sum of two numbers as string.
 #[pyfunction]
 #[pyo3(name = "zxcvbn")]
 fn zxcvbn_py(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<Entropy> {
@@ -293,7 +292,6 @@ fn zxcvbn_py(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<Entropy
     };
 }
 
-/// A Python module implemented in Rust.
 #[pymodule]
 #[pyo3(name = "zxcvbn")]
 fn zxcvbn_rs_py(_py: Python, m: &PyModule) -> PyResult<()> {

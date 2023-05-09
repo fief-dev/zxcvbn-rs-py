@@ -25,6 +25,7 @@ python = "3.10"
 dependencies = [
     "maturin",
     "mkdocs-material",
+    "mkdocstrings[python]>=0.18",
     "black",
     "mypy",
     "ruff",

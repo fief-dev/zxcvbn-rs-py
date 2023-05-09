@@ -43,6 +43,7 @@ plugins:
     - mkdocstrings:
         handlers:
             python:
+                paths: [./zxcvbn]
                 import:
                     - https://docs.python.org/3.10/objects.inv
                 options:
