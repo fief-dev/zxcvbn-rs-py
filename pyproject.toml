@@ -24,7 +24,7 @@ extend-select = ["I", "TRY"]
 python = "3.10"
 dependencies = [
     "maturin",
-    "mkdocs",
+    "mkdocs-material",
     "black",
     "mypy",
     "ruff",
