@@ -23,6 +23,8 @@ extend-select = ["I", "TRY"]
 [tool.hatch.envs.default]
 python = "3.10"
 dependencies = [
+    "maturin",
+    "mkdocs",
     "black",
     "mypy",
     "ruff",

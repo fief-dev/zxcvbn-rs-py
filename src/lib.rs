@@ -256,8 +256,8 @@ struct Entropy {
 /// Formats the sum of two numbers as string.
 #[pyfunction]
 #[pyo3(name = "zxcvbn")]
-fn zxcvbn_py(password: &str) -> PyResult<Entropy> {
-    let estimate = zxcvbn::zxcvbn(password, &[]).unwrap();
+fn zxcvbn_py(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<Entropy> {
+    let estimate = zxcvbn::zxcvbn(password, user_inputs.unwrap_or(vec![]).as_slice()).unwrap();
     let feedback: Option<Feedback> = match estimate.feedback() {
         None => None,
         Some(f) => Some(Feedback {
