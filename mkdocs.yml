@@ -43,7 +43,7 @@ plugins:
     - mkdocstrings:
         handlers:
             python:
-                paths: [./zxcvbn]
+                paths: [./zxcvbn_rs_py]
                 import:
                     - https://docs.python.org/3.10/objects.inv
                 options:
@@ -51,9 +51,9 @@ plugins:
 
 watch:
     - docs
-    - zxcvbn
+    - zxcvbn_rs_py
 
 nav:
     - About: index.md
     - Reference:
-        - zxcvbn: reference/zxcvbn.md
+        - zxcvbn_rs_py: reference/zxcvbn_rs_py.md

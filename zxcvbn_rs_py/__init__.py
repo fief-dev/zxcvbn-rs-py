@@ -1,4 +1,4 @@
-from .zxcvbn import *
+from .zxcvbn_rs_py import Entropy, Feedback, Suggestion, Warning, zxcvbn
 
 __all__ = [
     "zxcvbn",

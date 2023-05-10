@@ -1,6 +1,6 @@
 # Reference
 
-::: zxcvbn
+::: zxcvbn_rs_py
     options:
       members:
         - zxcvbn
