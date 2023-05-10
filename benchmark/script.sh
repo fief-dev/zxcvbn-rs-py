@@ -3,7 +3,7 @@
 set -e
 
 VENV=venv-bench
-LIBRARIES=("zxcvbn" "./target/wheels/zxcvbn_rs_py-0.1.0-cp310-cp310-macosx_11_0_arm64.whl")
+LIBRARIES=("zxcvbn" "zxcvbn-rs-py")
 
 rm -rf $VENV
 python -m venv $VENV
