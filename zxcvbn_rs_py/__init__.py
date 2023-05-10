@@ -5,6 +5,7 @@ from .zxcvbn_rs_py import (
     Feedback,
     Suggestion,
     Warning,
+    __version__,
     zxcvbn,
 )
 
@@ -15,5 +16,6 @@ __all__ = [
     "Feedback",
     "Suggestion",
     "Warning",
+    "__version__",
     "zxcvbn",
 ]

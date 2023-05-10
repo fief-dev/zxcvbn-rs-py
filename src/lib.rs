@@ -372,6 +372,7 @@ fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<E
 #[pymodule]
 #[pyo3(name = "zxcvbn_rs_py")]
 fn zxcvbn_rs_py_module(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_class::<Entropy>()?;
     m.add_class::<Warning>()?;
     m.add_class::<Suggestion>()?;

@@ -10,6 +10,7 @@ authors = [
 description = "Python bindings for zxcvbn-rs, the Rust implementation of zxcvbn"
 readme = "README.md"
 requires-python = ">=3.7"
+dynamic = ["version"]
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",

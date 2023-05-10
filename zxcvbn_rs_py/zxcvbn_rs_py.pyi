@@ -1,5 +1,7 @@
 from enum import Enum, auto
 
+__version__: str
+
 class Warning(Enum):
     StraightRowsOfKeysAreEasyToGuess = auto()
     ShortKeyboardPatternsAreEasyToGuess = auto()
