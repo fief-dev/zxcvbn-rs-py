@@ -42,6 +42,7 @@ dependencies = [
 
 [tool.hatch.envs.default.scripts]
 lint = [
+  "cargo fmt",
   "black .",
   "ruff --fix .",
 ]

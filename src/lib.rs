@@ -226,6 +226,41 @@ struct Feedback {
 
 #[pyclass]
 #[pyo3(module = "zxcvbn_rs_py")]
+#[derive(Clone)]
+struct CrackTimesSeconds {
+    #[pyo3(get)]
+    offline_fast_hashing_1e10_per_second: f64,
+    #[pyo3(get)]
+    offline_slow_hashing_1e4_per_second: f64,
+    #[pyo3(get)]
+    online_no_throttling_10_per_second: f64,
+    #[pyo3(get)]
+    online_throttling_100_per_hour: f64,
+}
+
+#[pyclass]
+#[pyo3(module = "zxcvbn_rs_py")]
+#[derive(Clone)]
+struct CrackTimesDisplay {
+    #[pyo3(get)]
+    offline_fast_hashing_1e10_per_second: String,
+    #[pyo3(get)]
+    offline_slow_hashing_1e4_per_second: String,
+    #[pyo3(get)]
+    online_no_throttling_10_per_second: String,
+    #[pyo3(get)]
+    online_throttling_100_per_hour: String,
+}
+
+fn crack_time_seconds_to_float(crack_time: zxcvbn::time_estimates::CrackTimeSeconds) -> f64 {
+    return match crack_time {
+        zxcvbn::time_estimates::CrackTimeSeconds::Integer(i) => i as f64,
+        zxcvbn::time_estimates::CrackTimeSeconds::Float(f) => f,
+    };
+}
+
+#[pyclass]
+#[pyo3(module = "zxcvbn_rs_py")]
 struct Entropy {
     /// Estimated guesses needed to crack the password
     #[pyo3(get)]
@@ -235,8 +270,14 @@ struct Entropy {
     #[pyo3(get)]
     guesses_log10: f64,
 
-    // /// List of back-of-the-envelope crack time estimations based on a few scenarios.
-    // crack_times: time_estimates::CrackTimes,
+    /// List of back-of-the-envelope crack time estimations based on a few scenarios.
+    #[pyo3(get)]
+    crack_times_seconds: CrackTimesSeconds,
+
+    /// Same as crack_times_seconds, with friendlier display string values.
+    #[pyo3(get)]
+    crack_times_display: CrackTimesDisplay,
+
     /// Overall strength score from 0-4.
     /// Any score less than 3 should be considered too weak.
     #[pyo3(get)]
@@ -256,7 +297,7 @@ struct Entropy {
 
 #[pyfunction]
 #[pyo3(name = "zxcvbn")]
-fn zxcvbn_py(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<Entropy> {
+fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<Entropy> {
     let estimate = zxcvbn::zxcvbn(password, user_inputs.unwrap_or(vec![]).as_slice());
     return match estimate {
         Err(_err @ zxcvbn::ZxcvbnError::BlankPassword) => {
@@ -281,9 +322,45 @@ fn zxcvbn_py(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<Entropy
                         .to_vec(),
                 }),
             };
+
+            let crack_times = estimate.crack_times();
+            let online_throttling_100_per_hour = crack_times.online_throttling_100_per_hour();
+            let online_no_throttling_10_per_second =
+                crack_times.online_no_throttling_10_per_second();
+            let offline_slow_hashing_1e4_per_second =
+                crack_times.offline_slow_hashing_1e4_per_second();
+            let offline_fast_hashing_1e10_per_second =
+                crack_times.offline_fast_hashing_1e10_per_second();
+
             return Ok(Entropy {
                 guesses: estimate.guesses(),
                 guesses_log10: estimate.guesses_log10(),
+                crack_times_seconds: CrackTimesSeconds {
+                    online_throttling_100_per_hour: crack_time_seconds_to_float(
+                        online_throttling_100_per_hour,
+                    ),
+                    online_no_throttling_10_per_second: crack_time_seconds_to_float(
+                        online_no_throttling_10_per_second,
+                    ),
+                    offline_slow_hashing_1e4_per_second: crack_time_seconds_to_float(
+                        offline_slow_hashing_1e4_per_second,
+                    ),
+                    offline_fast_hashing_1e10_per_second: crack_time_seconds_to_float(
+                        offline_fast_hashing_1e10_per_second,
+                    ),
+                },
+                crack_times_display: CrackTimesDisplay {
+                    online_throttling_100_per_hour: format!("{online_throttling_100_per_hour}"),
+                    online_no_throttling_10_per_second: format!(
+                        "{online_no_throttling_10_per_second}"
+                    ),
+                    offline_slow_hashing_1e4_per_second: format!(
+                        "{offline_slow_hashing_1e4_per_second}"
+                    ),
+                    offline_fast_hashing_1e10_per_second: format!(
+                        "{offline_fast_hashing_1e10_per_second}"
+                    ),
+                },
                 score: estimate.score(),
                 feedback: feedback,
                 calc_time: estimate.calculation_time().as_millis(),
@@ -294,11 +371,13 @@ fn zxcvbn_py(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<Entropy
 
 #[pymodule]
 #[pyo3(name = "zxcvbn_rs_py")]
-fn zxcvbn_rs_py(_py: Python, m: &PyModule) -> PyResult<()> {
+fn zxcvbn_rs_py_module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Entropy>()?;
     m.add_class::<Warning>()?;
     m.add_class::<Suggestion>()?;
     m.add_class::<Feedback>()?;
-    m.add_function(wrap_pyfunction!(zxcvbn_py, m)?)?;
+    m.add_class::<CrackTimesDisplay>()?;
+    m.add_class::<CrackTimesSeconds>()?;
+    m.add_function(wrap_pyfunction!(zxcvbn_rs_py_fn, m)?)?;
     Ok(())
 }

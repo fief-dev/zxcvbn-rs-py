@@ -1,9 +1,19 @@
-from .zxcvbn_rs_py import Entropy, Feedback, Suggestion, Warning, zxcvbn
+from .zxcvbn_rs_py import (
+    CrackTimesDisplay,
+    CrackTimesSeconds,
+    Entropy,
+    Feedback,
+    Suggestion,
+    Warning,
+    zxcvbn,
+)
 
 __all__ = [
-    "zxcvbn",
+    "CrackTimesDisplay",
+    "CrackTimesSeconds",
     "Entropy",
     "Feedback",
-    "Warning",
     "Suggestion",
+    "Warning",
+    "zxcvbn",
 ]

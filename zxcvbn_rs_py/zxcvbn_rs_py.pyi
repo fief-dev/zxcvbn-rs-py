@@ -35,6 +35,18 @@ class Feedback:
     warning: Warning | None
     suggestions: list[Suggestion]
 
+class CrackTimesSeconds:
+    offline_fast_hashing_1e10_per_second: float
+    offline_slow_hashing_1e4_per_second: float
+    online_no_throttling_10_per_second: float
+    online_throttling_100_per_hour: float
+
+class CrackTimesDisplay:
+    offline_fast_hashing_1e10_per_second: str
+    offline_slow_hashing_1e4_per_second: str
+    online_no_throttling_10_per_second: str
+    online_throttling_100_per_hour: str
+
 class Entropy:
     """Result of a password strength check."""
 
@@ -42,7 +54,13 @@ class Entropy:
     """Estimated guesses needed to crack the password"""
 
     guesses_log10: float
-    """Order of magnitude of `guesses`"""
+    """Order of magnitude of `guesses`."""
+
+    crack_times_seconds: CrackTimesSeconds
+    """List of back-of-the-envelope crack time estimations based on a few scenarios."""
+
+    crack_times_display: CrackTimesDisplay
+    """Same as crack_times_seconds, with friendlier display string values."""
 
     score: int
     """
