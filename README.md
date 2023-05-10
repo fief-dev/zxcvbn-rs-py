@@ -1,11 +1,10 @@
 # zxcvbn-rs-py
 
 <p align="center">
-    <em>Python bindings for [zxcvbn-rs](https://github.com/shssoichiro/zxcvbn-rs), the Rust implementation of zxcvbn</em>
+    <em>Python bindings for <a href="https://github.com/shssoichiro/zxcvbn-rs">zxcvbn-rs</a>, the Rust implementation of zxcvbn</em>
 </p>
 
 [![build](https://github.com/fief-dev/zxcvbn-rs-py/workflows/CI/badge.svg)](https://github.com/fief-dev/zxcvbn-rs-py/actions)
-[![codecov](https://codecov.io/gh/fief-dev/zxcvbn-rs-py/branch/main/graph/badge.svg)](https://codecov.io/gh/fief-dev/zxcvbn-rs-py)
 [![PyPI version](https://badge.fury.io/py/zxcvbn-rs-py.svg)](https://badge.fury.io/py/zxcvbn-rs-py)
 
 ---
