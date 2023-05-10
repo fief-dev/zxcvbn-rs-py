@@ -18,13 +18,13 @@
 ## Installation
 
 ```sh
-pip install zxvbn-rs-py
+pip install zxcvbn-rs-py
 ```
 
 ## Quickstart
 
 ```py
-from zxcbn_rs_py import zxcvbn
+from zxcvbn_rs_py import zxcvbn
 
 r = zxcvbn("correcthorsebatterystaple")
 print(r.score)

@@ -26,6 +26,14 @@ theme:
           toggle:
             icon: material/brightness-4
             name: Switch to light mode
+    features:
+      - navigation.instant
+      - navigation.expand
+      - navigation.indexes
+      - navigation.top
+      - search.suggest
+      - search.highlight
+      - content.code.copy
 
 markdown_extensions:
     - toc:
