@@ -25,13 +25,13 @@ Source = "https://github.com/fief-dev/zxcvbn-rs-py"
 [tool.maturin]
 features = ["pyo3/extension-module"]
 
-[tool.ruff]
+[tool.ruff.lint]
 extend-select = ["I", "TRY"]
 
 [tool.hatch]
 
 [tool.hatch.envs.default]
-python = "3.10"
+python = "3.12"
 dependencies = [
     "maturin",
     "mkdocs-material",
@@ -44,11 +44,11 @@ dependencies = [
 [tool.hatch.envs.default.scripts]
 lint = [
   "cargo fmt",
-  "black .",
+  "ruff format .",
   "ruff --fix .",
 ]
 lint-check = [
-  "black --check .",
+  "ruff format --check .",
   "ruff .",
 ]
 docs-serve = "mkdocs serve"
