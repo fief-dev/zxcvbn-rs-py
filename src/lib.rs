@@ -1,8 +1,45 @@
 extern crate zxcvbn;
 
-use pyo3::exceptions::{PyRuntimeError, PyValueError};
+use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use std::fmt;
+
+#[pyclass]
+#[pyo3(module = "zxcvbn_rs_py")]
+#[derive(Clone)]
+pub enum Score {
+    /// Can be cracked with 10^3 guesses or less.
+    ZERO = 0,
+    /// Can be cracked with 10^6 guesses or less.
+    ONE,
+    /// Can be cracked with 10^8 guesses or less.
+    TWO,
+    /// Can be cracked with 10^10 guesses or less.
+    THREE,
+    /// Requires more than 10^10 guesses to crack.
+    FOUR,
+}
+
+fn match_score(score: zxcvbn::Score) -> Result<Score, PyErr> {
+    match score {
+        zxcvbn::Score::Zero => {
+            Ok(Score::ZERO)
+        }
+        zxcvbn::Score::One => {
+            Ok(Score::ONE)
+        }
+        zxcvbn::Score::Two => {
+            Ok(Score::TWO)
+        }
+        zxcvbn::Score::Three => {
+            Ok(Score::THREE)
+        }
+        zxcvbn::Score::Four => {
+            Ok(Score::FOUR)
+        }
+        _ => return Err(PyRuntimeError::new_err("zxcvbn entropy score must be in the range 0-4"))
+    }
+}
 
 #[pyclass]
 #[pyo3(module = "zxcvbn_rs_py")]
@@ -281,7 +318,7 @@ struct Entropy {
     /// Overall strength score from 0-4.
     /// Any score less than 3 should be considered too weak.
     #[pyo3(get)]
-    score: u8,
+    score: Score,
 
     /// Verbal feedback to help choose better passwords. Set when `score` <= 2.
     #[pyo3(get)]
@@ -299,80 +336,71 @@ struct Entropy {
 #[pyo3(name = "zxcvbn")]
 fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<Entropy> {
     let estimate = zxcvbn::zxcvbn(password, user_inputs.unwrap_or(vec![]).as_slice());
-    return match estimate {
-        Err(_err @ zxcvbn::ZxcvbnError::BlankPassword) => {
-            Err(PyValueError::new_err("Cannot evaluate a blank password"))
-        }
-        Err(_err @ zxcvbn::ZxcvbnError::DurationOutOfRange) => Err(PyRuntimeError::new_err(
-            "Calculation time created a duration out of range",
-        )),
-        Ok(estimate) => {
-            let feedback: Option<Feedback> = match estimate.feedback() {
+    let feedback: Option<Feedback> = match estimate.feedback() {
+        None => None,
+        Some(f) => Some(Feedback {
+            warning: match f.warning() {
                 None => None,
-                Some(f) => Some(Feedback {
-                    warning: match f.warning() {
-                        None => None,
-                        Some(w) => Some(match_warning(w)),
-                    },
-                    suggestions: f
-                        .suggestions()
-                        .iter()
-                        .map(|s| match_suggestion(*s))
-                        .collect::<Vec<Suggestion>>()
-                        .to_vec(),
-                }),
-            };
-
-            let crack_times = estimate.crack_times();
-            let online_throttling_100_per_hour = crack_times.online_throttling_100_per_hour();
-            let online_no_throttling_10_per_second =
-                crack_times.online_no_throttling_10_per_second();
-            let offline_slow_hashing_1e4_per_second =
-                crack_times.offline_slow_hashing_1e4_per_second();
-            let offline_fast_hashing_1e10_per_second =
-                crack_times.offline_fast_hashing_1e10_per_second();
-
-            return Ok(Entropy {
-                guesses: estimate.guesses(),
-                guesses_log10: estimate.guesses_log10(),
-                crack_times_seconds: CrackTimesSeconds {
-                    online_throttling_100_per_hour: crack_time_seconds_to_float(
-                        online_throttling_100_per_hour,
-                    ),
-                    online_no_throttling_10_per_second: crack_time_seconds_to_float(
-                        online_no_throttling_10_per_second,
-                    ),
-                    offline_slow_hashing_1e4_per_second: crack_time_seconds_to_float(
-                        offline_slow_hashing_1e4_per_second,
-                    ),
-                    offline_fast_hashing_1e10_per_second: crack_time_seconds_to_float(
-                        offline_fast_hashing_1e10_per_second,
-                    ),
-                },
-                crack_times_display: CrackTimesDisplay {
-                    online_throttling_100_per_hour: format!("{online_throttling_100_per_hour}"),
-                    online_no_throttling_10_per_second: format!(
-                        "{online_no_throttling_10_per_second}"
-                    ),
-                    offline_slow_hashing_1e4_per_second: format!(
-                        "{offline_slow_hashing_1e4_per_second}"
-                    ),
-                    offline_fast_hashing_1e10_per_second: format!(
-                        "{offline_fast_hashing_1e10_per_second}"
-                    ),
-                },
-                score: estimate.score(),
-                feedback: feedback,
-                calc_time: estimate.calculation_time().as_millis(),
-            });
-        }
+                Some(w) => Some(match_warning(w)),
+            },
+            suggestions: f
+                .suggestions()
+                .iter()
+                .map(|s| match_suggestion(*s))
+                .collect::<Vec<Suggestion>>()
+                .to_vec(),
+        }),
     };
+
+    let crack_times = estimate.crack_times();
+    let online_throttling_100_per_hour = crack_times.online_throttling_100_per_hour();
+    let online_no_throttling_10_per_second =
+        crack_times.online_no_throttling_10_per_second();
+    let offline_slow_hashing_1e4_per_second =
+        crack_times.offline_slow_hashing_1e4_per_second();
+    let offline_fast_hashing_1e10_per_second =
+        crack_times.offline_fast_hashing_1e10_per_second();
+
+    return Ok(Entropy {
+        guesses: estimate.guesses(),
+        guesses_log10: estimate.guesses_log10(),
+        crack_times_seconds: CrackTimesSeconds {
+            online_throttling_100_per_hour: crack_time_seconds_to_float(
+                online_throttling_100_per_hour,
+            ),
+            online_no_throttling_10_per_second: crack_time_seconds_to_float(
+                online_no_throttling_10_per_second,
+            ),
+            offline_slow_hashing_1e4_per_second: crack_time_seconds_to_float(
+                offline_slow_hashing_1e4_per_second,
+            ),
+            offline_fast_hashing_1e10_per_second: crack_time_seconds_to_float(
+                offline_fast_hashing_1e10_per_second,
+            ),
+        },
+        crack_times_display: CrackTimesDisplay {
+            online_throttling_100_per_hour: format!("{online_throttling_100_per_hour}"),
+            online_no_throttling_10_per_second: format!(
+                "{online_no_throttling_10_per_second}"
+            ),
+            offline_slow_hashing_1e4_per_second: format!(
+                "{offline_slow_hashing_1e4_per_second}"
+            ),
+            offline_fast_hashing_1e10_per_second: format!(
+                "{offline_fast_hashing_1e10_per_second}"
+            ),
+        },
+        score: match_score(estimate.score())?,
+        feedback: feedback,
+        calc_time: estimate.calculation_time().as_millis(),
+    });
 }
 
 #[pymodule]
 #[pyo3(name = "zxcvbn_rs_py")]
 fn zxcvbn_rs_py_module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
+    m.add_class::<Score>()?;
     m.add_class::<Entropy>()?;
     m.add_class::<Warning>()?;
     m.add_class::<Suggestion>()?;
