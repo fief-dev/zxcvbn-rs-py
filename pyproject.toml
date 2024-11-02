@@ -9,7 +9,7 @@ authors = [
 ]
 description = "Python bindings for zxcvbn-rs, the Rust implementation of zxcvbn"
 readme = "README.md"
-requires-python = ">=3.7,<3.13"
+requires-python = ">=3.9,<3.14"
 dynamic = ["version"]
 classifiers = [
     "Programming Language :: Rust",
@@ -25,13 +25,17 @@ Source = "https://github.com/fief-dev/zxcvbn-rs-py"
 [tool.maturin]
 features = ["pyo3/extension-module"]
 
+[tool.ruff]
+target-version = "py39"
+
 [tool.ruff.lint]
-extend-select = ["I", "TRY"]
+extend-select = ["I", "TRY", "UP"]
 
 [tool.hatch]
 
 [tool.hatch.envs.default]
-python = "3.12"
+installer = "uv"
+python = "3.9"
 dependencies = [
     "maturin",
     "mkdocs-material",
@@ -45,11 +49,11 @@ dependencies = [
 lint = [
   "cargo fmt",
   "ruff format .",
-  "ruff --fix .",
+  "ruff check --fix .",
 ]
 lint-check = [
   "ruff format --check .",
-  "ruff .",
+  "ruff check .",
 ]
 docs-serve = "mkdocs serve"
 docs-build = "mkdocs build"
