@@ -44,6 +44,7 @@ dependencies = [
     "mypy",
     "ruff",
     "pip",
+    "pytest",
 ]
 
 [tool.hatch.envs.default.scripts]
@@ -58,3 +59,4 @@ lint-check = [
 ]
 docs-serve = "mkdocs serve"
 docs-build = "mkdocs build"
+test = "pytest"

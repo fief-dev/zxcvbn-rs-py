@@ -22,22 +22,16 @@ pub enum Score {
 
 fn match_score(score: zxcvbn::Score) -> Result<Score, PyErr> {
     match score {
-        zxcvbn::Score::Zero => {
-            Ok(Score::ZERO)
+        zxcvbn::Score::Zero => Ok(Score::ZERO),
+        zxcvbn::Score::One => Ok(Score::ONE),
+        zxcvbn::Score::Two => Ok(Score::TWO),
+        zxcvbn::Score::Three => Ok(Score::THREE),
+        zxcvbn::Score::Four => Ok(Score::FOUR),
+        _ => {
+            return Err(PyRuntimeError::new_err(
+                "zxcvbn entropy score must be in the range 0-4",
+            ))
         }
-        zxcvbn::Score::One => {
-            Ok(Score::ONE)
-        }
-        zxcvbn::Score::Two => {
-            Ok(Score::TWO)
-        }
-        zxcvbn::Score::Three => {
-            Ok(Score::THREE)
-        }
-        zxcvbn::Score::Four => {
-            Ok(Score::FOUR)
-        }
-        _ => return Err(PyRuntimeError::new_err("zxcvbn entropy score must be in the range 0-4"))
     }
 }
 
@@ -334,8 +328,11 @@ struct Entropy {
 
 #[pyfunction]
 #[pyo3(name = "zxcvbn")]
-fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<Entropy> {
-    let estimate = zxcvbn::zxcvbn(password, user_inputs.unwrap_or(vec![]).as_slice());
+fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<String>>) -> PyResult<Entropy> {
+    let user_inputs_unwrapped = user_inputs.unwrap_or_default();
+    let user_inputs_vec: Vec<&str> = user_inputs_unwrapped.iter().map(|s| s.as_str()).collect();
+    let string_slice: &[&str] = &user_inputs_vec;
+    let estimate = zxcvbn::zxcvbn(password, string_slice);
     let feedback: Option<Feedback> = match estimate.feedback() {
         None => None,
         Some(f) => Some(Feedback {
@@ -354,12 +351,9 @@ fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<E
 
     let crack_times = estimate.crack_times();
     let online_throttling_100_per_hour = crack_times.online_throttling_100_per_hour();
-    let online_no_throttling_10_per_second =
-        crack_times.online_no_throttling_10_per_second();
-    let offline_slow_hashing_1e4_per_second =
-        crack_times.offline_slow_hashing_1e4_per_second();
-    let offline_fast_hashing_1e10_per_second =
-        crack_times.offline_fast_hashing_1e10_per_second();
+    let online_no_throttling_10_per_second = crack_times.online_no_throttling_10_per_second();
+    let offline_slow_hashing_1e4_per_second = crack_times.offline_slow_hashing_1e4_per_second();
+    let offline_fast_hashing_1e10_per_second = crack_times.offline_fast_hashing_1e10_per_second();
 
     return Ok(Entropy {
         guesses: estimate.guesses(),
@@ -380,15 +374,9 @@ fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<E
         },
         crack_times_display: CrackTimesDisplay {
             online_throttling_100_per_hour: format!("{online_throttling_100_per_hour}"),
-            online_no_throttling_10_per_second: format!(
-                "{online_no_throttling_10_per_second}"
-            ),
-            offline_slow_hashing_1e4_per_second: format!(
-                "{offline_slow_hashing_1e4_per_second}"
-            ),
-            offline_fast_hashing_1e10_per_second: format!(
-                "{offline_fast_hashing_1e10_per_second}"
-            ),
+            online_no_throttling_10_per_second: format!("{online_no_throttling_10_per_second}"),
+            offline_slow_hashing_1e4_per_second: format!("{offline_slow_hashing_1e4_per_second}"),
+            offline_fast_hashing_1e10_per_second: format!("{offline_fast_hashing_1e10_per_second}"),
         },
         score: match_score(estimate.score())?,
         feedback: feedback,
@@ -398,7 +386,7 @@ fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<&str>>) -> PyResult<E
 
 #[pymodule]
 #[pyo3(name = "zxcvbn_rs_py")]
-fn zxcvbn_rs_py_module(_py: Python, m: &PyModule) -> PyResult<()> {
+fn zxcvbn_rs_py_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_class::<Score>()?;
     m.add_class::<Entropy>()?;
