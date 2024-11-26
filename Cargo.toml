@@ -9,5 +9,5 @@ name = "zxcvbn_rs_py"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "^0.21"
+pyo3 = "^0.23"
 zxcvbn = "3.1.0"

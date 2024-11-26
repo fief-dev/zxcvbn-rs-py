@@ -4,9 +4,9 @@ use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use std::fmt;
 
-#[pyclass]
+#[pyclass(eq, eq_int)]
 #[pyo3(module = "zxcvbn_rs_py")]
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Score {
     /// Can be cracked with 10^3 guesses or less.
     ZERO = 0,
@@ -28,16 +28,16 @@ fn match_score(score: zxcvbn::Score) -> Result<Score, PyErr> {
         zxcvbn::Score::Three => Ok(Score::THREE),
         zxcvbn::Score::Four => Ok(Score::FOUR),
         _ => {
-            return Err(PyRuntimeError::new_err(
+            Err(PyRuntimeError::new_err(
                 "zxcvbn entropy score must be in the range 0-4",
             ))
         }
     }
 }
 
-#[pyclass]
+#[pyclass(eq, eq_int)]
 #[pyo3(module = "zxcvbn_rs_py")]
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 enum Warning {
     StraightRowsOfKeysAreEasyToGuess,
     ShortKeyboardPatternsAreEasyToGuess,
@@ -96,7 +96,7 @@ impl fmt::Display for Warning {
 #[pymethods]
 impl Warning {
     fn __str__(&self) -> PyResult<String> {
-        return Ok(format!("{self}"));
+        Ok(format!("{self}"))
     }
 }
 
@@ -137,9 +137,9 @@ fn match_warning(warning: zxcvbn::feedback::Warning) -> Warning {
     }
 }
 
-#[pyclass]
+#[pyclass(eq, eq_int)]
 #[pyo3(module = "zxcvbn_rs_py")]
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 enum Suggestion {
     UseAFewWordsAvoidCommonPhrases,
     NoNeedForSymbolsDigitsOrUppercaseLetters,
@@ -203,7 +203,7 @@ impl fmt::Display for Suggestion {
 #[pymethods]
 impl Suggestion {
     fn __str__(&self) -> PyResult<String> {
-        return Ok(format!("{self}"));
+        Ok(format!("{self}"))
     }
 }
 
@@ -284,10 +284,10 @@ struct CrackTimesDisplay {
 }
 
 fn crack_time_seconds_to_float(crack_time: zxcvbn::time_estimates::CrackTimeSeconds) -> f64 {
-    return match crack_time {
+    match crack_time {
         zxcvbn::time_estimates::CrackTimeSeconds::Integer(i) => i as f64,
         zxcvbn::time_estimates::CrackTimeSeconds::Float(f) => f,
-    };
+    }
 }
 
 #[pyclass]
@@ -327,27 +327,21 @@ struct Entropy {
 }
 
 #[pyfunction]
-#[pyo3(name = "zxcvbn")]
+#[pyo3(name = "zxcvbn", signature = (password, user_inputs=None))]
 fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<String>>) -> PyResult<Entropy> {
     let user_inputs_unwrapped = user_inputs.unwrap_or_default();
     let user_inputs_vec: Vec<&str> = user_inputs_unwrapped.iter().map(|s| s.as_str()).collect();
     let string_slice: &[&str] = &user_inputs_vec;
     let estimate = zxcvbn::zxcvbn(password, string_slice);
-    let feedback: Option<Feedback> = match estimate.feedback() {
-        None => None,
-        Some(f) => Some(Feedback {
-            warning: match f.warning() {
-                None => None,
-                Some(w) => Some(match_warning(w)),
-            },
+    let feedback: Option<Feedback> = estimate.feedback().map(|f| Feedback {
+            warning: f.warning().map(match_warning),
             suggestions: f
                 .suggestions()
                 .iter()
                 .map(|s| match_suggestion(*s))
                 .collect::<Vec<Suggestion>>()
                 .to_vec(),
-        }),
-    };
+        });
 
     let crack_times = estimate.crack_times();
     let online_throttling_100_per_hour = crack_times.online_throttling_100_per_hour();
@@ -355,7 +349,7 @@ fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<String>>) -> PyResult
     let offline_slow_hashing_1e4_per_second = crack_times.offline_slow_hashing_1e4_per_second();
     let offline_fast_hashing_1e10_per_second = crack_times.offline_fast_hashing_1e10_per_second();
 
-    return Ok(Entropy {
+    Ok(Entropy {
         guesses: estimate.guesses(),
         guesses_log10: estimate.guesses_log10(),
         crack_times_seconds: CrackTimesSeconds {
@@ -379,9 +373,9 @@ fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<String>>) -> PyResult
             offline_fast_hashing_1e10_per_second: format!("{offline_fast_hashing_1e10_per_second}"),
         },
         score: match_score(estimate.score())?,
-        feedback: feedback,
+        feedback,
         calc_time: estimate.calculation_time().as_millis(),
-    });
+    })
 }
 
 #[pymodule]
