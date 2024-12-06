@@ -27,11 +27,9 @@ fn match_score(score: zxcvbn::Score) -> Result<Score, PyErr> {
         zxcvbn::Score::Two => Ok(Score::TWO),
         zxcvbn::Score::Three => Ok(Score::THREE),
         zxcvbn::Score::Four => Ok(Score::FOUR),
-        _ => {
-            Err(PyRuntimeError::new_err(
-                "zxcvbn entropy score must be in the range 0-4",
-            ))
-        }
+        _ => Err(PyRuntimeError::new_err(
+            "zxcvbn entropy score must be in the range 0-4",
+        )),
     }
 }
 
@@ -334,14 +332,14 @@ fn zxcvbn_rs_py_fn(password: &str, user_inputs: Option<Vec<String>>) -> PyResult
     let string_slice: &[&str] = &user_inputs_vec;
     let estimate = zxcvbn::zxcvbn(password, string_slice);
     let feedback: Option<Feedback> = estimate.feedback().map(|f| Feedback {
-            warning: f.warning().map(match_warning),
-            suggestions: f
-                .suggestions()
-                .iter()
-                .map(|s| match_suggestion(*s))
-                .collect::<Vec<Suggestion>>()
-                .to_vec(),
-        });
+        warning: f.warning().map(match_warning),
+        suggestions: f
+            .suggestions()
+            .iter()
+            .map(|s| match_suggestion(*s))
+            .collect::<Vec<Suggestion>>()
+            .to_vec(),
+    });
 
     let crack_times = estimate.crack_times();
     let online_throttling_100_per_hour = crack_times.online_throttling_100_per_hour();
