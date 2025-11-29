@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "zxcvbn-rs-py"
 authors = [
-  { name = "François Voron", email = "contact@fief.dev" }
+  { name = "François Voron", email = "francois@francoisvoron.com" }
 ]
 description = "Python bindings for zxcvbn-rs, the Rust implementation of zxcvbn"
 readme = "README.md"
