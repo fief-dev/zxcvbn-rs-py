@@ -1,0 +1,29 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python_version: ["3.10", "3.11", "3.13", "3.14", "3.14t"]
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python_version }}
+      - name: Install hatch
+        run: pip install hatch
+      - name: Install the project
+        run: hatch env create
+      - name: Local build
+        run: hatch run maturin develop
+      - name: Lint and typecheck
+        run: |
+          hatch run lint-check
+      - name: Test
+        run: |
+          hatch run test
