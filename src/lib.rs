@@ -2,6 +2,7 @@ extern crate zxcvbn;
 
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use std::fmt;
 
 #[pyclass(eq, eq_int)]
@@ -30,6 +31,16 @@ fn match_score(score: zxcvbn::Score) -> Result<Score, PyErr> {
         _ => Err(PyRuntimeError::new_err(
             "zxcvbn entropy score must be in the range 0-4",
         )),
+    }
+}
+
+fn score_to_u8(score: &Score) -> u8 {
+    match score {
+        Score::ZERO => 0,
+        Score::ONE => 1,
+        Score::TWO => 2,
+        Score::THREE => 3,
+        Score::FOUR => 4,
     }
 }
 
@@ -322,6 +333,76 @@ struct Entropy {
     /// How long it took to calculate the answer.
     #[pyo3(get)]
     calc_time: u128,
+}
+
+#[pymethods]
+impl Entropy {
+    fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        let result = PyDict::new(py);
+
+        result.set_item("guesses", self.guesses)?;
+        result.set_item("guesses_log10", self.guesses_log10)?;
+
+        let crack_times_seconds = PyDict::new(py);
+        crack_times_seconds.set_item(
+            "offline_fast_hashing_1e10_per_second",
+            self.crack_times_seconds.offline_fast_hashing_1e10_per_second,
+        )?;
+        crack_times_seconds.set_item(
+            "offline_slow_hashing_1e4_per_second",
+            self.crack_times_seconds.offline_slow_hashing_1e4_per_second,
+        )?;
+        crack_times_seconds.set_item(
+            "online_no_throttling_10_per_second",
+            self.crack_times_seconds.online_no_throttling_10_per_second,
+        )?;
+        crack_times_seconds.set_item(
+            "online_throttling_100_per_hour",
+            self.crack_times_seconds.online_throttling_100_per_hour,
+        )?;
+        result.set_item("crack_times_seconds", crack_times_seconds)?;
+
+        let crack_times_display = PyDict::new(py);
+        crack_times_display.set_item(
+            "offline_fast_hashing_1e10_per_second",
+            &self.crack_times_display.offline_fast_hashing_1e10_per_second,
+        )?;
+        crack_times_display.set_item(
+            "offline_slow_hashing_1e4_per_second",
+            &self.crack_times_display.offline_slow_hashing_1e4_per_second,
+        )?;
+        crack_times_display.set_item(
+            "online_no_throttling_10_per_second",
+            &self.crack_times_display.online_no_throttling_10_per_second,
+        )?;
+        crack_times_display.set_item(
+            "online_throttling_100_per_hour",
+            &self.crack_times_display.online_throttling_100_per_hour,
+        )?;
+        result.set_item("crack_times_display", crack_times_display)?;
+
+        result.set_item("score", score_to_u8(&self.score))?;
+        result.set_item("calc_time", self.calc_time)?;
+
+        if let Some(feedback) = &self.feedback {
+            let feedback_dict = PyDict::new(py);
+            feedback_dict.set_item(
+                "warning",
+                feedback.warning.as_ref().map(ToString::to_string),
+            )?;
+            let suggestions = feedback
+                .suggestions
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<String>>();
+            feedback_dict.set_item("suggestions", suggestions)?;
+            result.set_item("feedback", feedback_dict)?;
+        } else {
+            result.set_item("feedback", py.None())?;
+        }
+
+        Ok(result)
+    }
 }
 
 #[pyfunction]

@@ -76,6 +76,10 @@ class Entropy:
     calc_time: int
     """How long it took to calculate the answer."""
 
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-serializable dictionary representation."""
+        ...
+
 def zxcvbn(password: str, user_inputs: list[str] | None = None) -> Entropy:
     """
     Measure the strength of a password.
